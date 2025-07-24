@@ -6,197 +6,378 @@ export async function generateHTMLOutput(messages, totalCost) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsApp Chat Export</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind CSS configuration for shadcn/ui compatibility
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        input: "hsl(214.3 31.8% 91.4%)",
+                        ring: "hsl(222.2 84% 4.9%)",
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                        primary: {
+                            DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(210 40% 96%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(0 84.2% 60.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(210 40% 96%)",
+                            foreground: "hsl(215.4 16.3% 46.9%)",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(210 40% 96%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                        popover: {
+                            DEFAULT: "hsl(0 0% 100%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                        card: {
+                            DEFAULT: "hsl(0 0% 100%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                    },
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                }
+            }
+        }
+    </script>
     <style>
-        body { 
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        * {
+            border-color: hsl(var(--border));
+        }
+        
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #ffffff;
-            min-height: 100vh;
-        }
-        .message-text { 
-            word-wrap: break-word; 
-            line-height: 1.6;
-            font-size: 15px;
         }
         
-        /* Enhanced message block styling */
-        .message-block { 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .message-block:hover { 
-            transform: translateY(-2px) scale(1.01); 
-            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-        }
-        
-        /* Text message styling */
-        .text-message {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-        }
-        
-        /* Second speaker text message styling */
-        .text-message.speaker-2 {
-            background: #f0fdf4;
-            border: 1px solid #e5e7eb;
-        }
-        
-        /* Audio message styling */
-        .audio-message {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-        }
-        
-        /* Second speaker audio message styling */
-        .audio-message.speaker-2 {
-            background: #f0fdf4;
-            border: 1px solid #e5e7eb;
-        }
-        
-        /* Edit mode styling */
-        .edit-mode { 
-            background: linear-gradient(145deg, rgba(251,146,60,0.1) 0%, rgba(245,101,101,0.1) 100%);
-            border: 2px solid #f59e0b; 
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(251,146,60,0.3);
-        }
-        
-        /* Edit button states */
-        .edit-btn {
-            transition: all 0.2s ease;
+        /* shadcn/ui Button component styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            border-radius: calc(var(--radius) - 2px);
+            font-size: 0.875rem;
             font-weight: 500;
-            letter-spacing: 0.3px;
-        }
-        .edit-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        /* Message header improvements */
-        .message-header {
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding-bottom: 8px;
-            margin-bottom: 12px;
-        }
-        
-        /* Badge improvements */
-        .message-badge {
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 10px;
-            padding: 4px 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        /* Merge indicator */
-        .merge-indicator { 
-            border-left: 4px solid #10b981;
-            box-shadow: 0 0 15px rgba(16,185,129,0.3);
-        }
-        
-        /* Audio player improvements */
-        audio {
-            outline: none;
-            border-radius: 8px;
-            width: 100%;
-        }
-        
-        /* Container improvements */
-        .chat-container {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        /* Header improvements */
-        .chat-header {
-            background: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        /* Button improvements */
-        .action-btn {
-            background: linear-gradient(145deg, var(--btn-from), var(--btn-to));
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: all 0.2s ease;
-            font-weight: 600;
-        }
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-        }
-        
-        /* Merge mode styling */
-        .merge-mode .message-block {
+            transition: colors 0.2s;
+            border: 1px solid transparent;
             cursor: pointer;
-            border: 2px dashed rgba(16,185,129,0.4);
-            transition: all 0.2s ease;
-        }
-        .merge-mode .message-block:hover {
-            border-color: #10b981;
-            background: linear-gradient(145deg, rgba(16,185,129,0.1), rgba(5,150,105,0.1));
-            box-shadow: 0 8px 16px rgba(16,185,129,0.2);
-        }
-        .merge-mode .message-block.selected {
-            border-color: #10b981;
-            background: linear-gradient(145deg, rgba(16,185,129,0.2), rgba(5,150,105,0.15));
-            box-shadow: 0 0 20px rgba(16,185,129,0.4);
+            outline: none;
         }
         
-        /* Textarea improvements */
-        .edit-textarea {
-            background: rgba(255,255,255,0.95);
-            border: 2px solid rgba(251,146,60,0.3);
-            border-radius: 12px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s ease;
+        .btn:focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
         }
-        .edit-textarea:focus {
-            border-color: #f59e0b;
-            box-shadow: 0 0 20px rgba(251,146,60,0.3);
+        
+        .btn:disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        
+        .btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+        
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+        
+        .btn-secondary:hover {
+            background-color: hsl(var(--secondary) / 0.8);
+        }
+        
+        .btn-destructive {
+            background-color: hsl(var(--destructive));
+            color: hsl(var(--destructive-foreground));
+        }
+        
+        .btn-destructive:hover {
+            background-color: hsl(var(--destructive) / 0.9);
+        }
+        
+        .btn-outline {
+            border: 1px solid hsl(var(--border));
+            background-color: hsl(var(--background));
+        }
+        
+        .btn-outline:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+        
+        .btn-ghost {
+            background-color: transparent;
+        }
+        
+        .btn-ghost:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+        
+        .btn-sm {
+            height: 2.25rem;
+            border-radius: calc(var(--radius) - 4px);
+            padding: 0 0.75rem;
+            font-size: 0.8125rem;
+        }
+        
+        .btn-default {
+            height: 2.5rem;
+            padding: 0 1rem;
+        }
+        
+        .btn-lg {
+            height: 2.75rem;
+            border-radius: calc(var(--radius) - 2px);
+            padding: 0 2rem;
+        }
+        
+        /* shadcn/ui Card component styles */
+        .card {
+            border-radius: calc(var(--radius) + 2px);
+            border: 1px solid hsl(var(--border));
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: -0.025em;
+        }
+        
+        .card-description {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+            padding-top: 0;
+        }
+        
+        .card-footer {
+            display: flex;
+            align-items: center;
+            padding: 1.5rem;
+            padding-top: 0;
+        }
+        
+        /* shadcn/ui Badge component styles */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 9999px;
+            padding: 0.125rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            transition: colors 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .badge-default {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+        
+        .badge-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+        
+        .badge-destructive {
+            background-color: hsl(var(--destructive));
+            color: hsl(var(--destructive-foreground));
+        }
+        
+        .badge-outline {
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(var(--border));
+        }
+        
+        /* Custom message styling with shadcn design */
+        .message-card {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .message-card:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        
+        .message-card.speaker-2 {
+            background-color: hsl(142 76% 96%);
+            border-color: hsl(142 76% 91%);
+        }
+        
+        .message-card.edit-mode {
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+        
+        .merge-mode .message-card {
+            cursor: pointer;
+            border-style: dashed;
+            border-color: hsl(var(--muted-foreground));
+        }
+        
+        .merge-mode .message-card:hover {
+            border-color: hsl(var(--primary));
+            background-color: hsl(var(--primary) / 0.05);
+        }
+        
+        .merge-mode .message-card.selected {
+            border-color: hsl(var(--primary));
+            background-color: hsl(var(--primary) / 0.1);
+            border-style: solid;
+        }
+        
+        .edit-textarea {
+            width: 100%;
+            border-radius: calc(var(--radius) - 2px);
+            border: 1px solid hsl(var(--border));
+            background-color: hsl(var(--background));
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
             outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .edit-textarea:focus {
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+        
+        /* Alert component for merge instructions */
+        .alert {
+            position: relative;
+            width: 100%;
+            border-radius: calc(var(--radius) - 2px);
+            border: 1px solid hsl(var(--border));
+            padding: 1rem;
+            background-color: hsl(var(--background));
+        }
+        
+        .alert-info {
+            border-color: hsl(214 100% 86%);
+            background-color: hsl(214 100% 97%);
+            color: hsl(214 84% 25%);
         }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-5xl mx-auto chat-container rounded-2xl p-8">
-        <div class="chat-header flex items-center justify-between mb-8 p-6 rounded-xl">
-            <h1 class="text-3xl font-bold text-gray-800">💬 שיחת WhatsApp</h1>
-            <div class="flex gap-3">
-                <button id="mergeBtn" onclick="toggleMergeMode()" 
-                        class="action-btn text-white px-6 py-3 rounded-xl text-sm font-medium"
-                        style="--btn-from: #3b82f6; --btn-to: #1d4ed8;">
-                    🔗 מצב מיזוג הודעות
-                </button>
-                <button id="confirmMergeBtn" onclick="confirmMerge()" style="display: none;"
-                        class="action-btn text-white px-6 py-3 rounded-xl text-sm font-medium"
-                        style="--btn-from: #10b981; --btn-to: #059669;">
-                    ✅ בצע מיזוג
-                </button>
-                <button id="cancelMergeBtn" onclick="cancelMergeMode()" style="display: none;"
-                        class="action-btn text-white px-6 py-3 rounded-xl text-sm font-medium"
-                        style="--btn-from: #6b7280; --btn-to: #4b5563;">
-                    ❌ בטל
-                </button>
+<body class="min-h-screen bg-background font-sans antialiased">
+    <div class="container mx-auto max-w-6xl p-6">
+        <!-- Header Card -->
+        <div class="card mb-8">
+            <div class="card-header">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="card-title text-2xl">💬 שיחת WhatsApp</h1>
+                        <p class="card-description mt-2">מרכיב הודעות ומקבצים תמלולי שמע</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="mergeBtn" onclick="toggleMergeMode()" 
+                                class="btn btn-primary btn-default">
+                            🔗 מצב מיזוג הודעות
+                        </button>
+                        <button id="confirmMergeBtn" onclick="confirmMerge()" style="display: none;"
+                                class="btn btn-secondary btn-default">
+                            ✅ בצע מיזוג
+                        </button>
+                        <button id="cancelMergeBtn" onclick="cancelMergeMode()" style="display: none;"
+                                class="btn btn-outline btn-default">
+                            ❌ בטל
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div id="mergeInstructions" class="mb-6 p-4 rounded-xl border border-blue-300 hidden"
-             style="background: linear-gradient(145deg, rgba(59,130,246,0.1), rgba(147,51,234,0.1)); backdrop-filter: blur(10px);">
-            <p class="text-sm text-blue-900 font-medium">
-                💡 <strong>מצב מיזוג הודעות:</strong> לחץ על הודעות מאותו דובר כדי לסמן אותן למיזוג. ההודעות המסומנות יתמזגו להודעה אחת.
-            </p>
+        <!-- Merge Instructions Alert -->
+        <div id="mergeInstructions" class="alert alert-info mb-6 hidden">
+            <div class="flex items-start gap-3">
+                <div class="text-lg">💡</div>
+                <div>
+                    <h4 class="font-semibold mb-1">מצב מיזוג הודעות</h4>
+                    <p class="text-sm opacity-90">
+                        לחץ על הודעות מאותו דובר כדי לסמן אותן למיזוג. ההודעות המסומנות יתמזגו להודעה אחת.
+                    </p>
+                </div>
+            </div>
         </div>
         
-        <div id="messagesContainer" class="space-y-6">
+        <!-- Messages Container -->
+        <div id="messagesContainer" class="space-y-4">
             ${await generateMessagesHTML(messages)}
         </div>
         
-        <div class="mt-8 pt-6 border-t border-gray-200 text-sm text-gray-500 text-center">
-            <p class="font-medium">✨ נוצר על ידי WhatsApp Chat Converter</p>
-            <p class="mt-1">עלות תמלול כוללת: <span class="font-semibold">${totalCost.toFixed(4)}$</span></p>
+        <!-- Footer Card -->
+        <div class="card mt-8">
+            <div class="card-content text-center">
+                <div class="flex items-center justify-center gap-2 text-muted-foreground">
+                    <span>✨</span>
+                    <span class="text-sm font-medium">נוצר על ידי WhatsApp Chat Converter</span>
+                </div>
+                <div class="mt-2 text-sm">
+                    <span class="text-muted-foreground">עלות תמלול כוללת:</span>
+                    <span class="badge badge-outline ml-2">${totalCost.toFixed(4)}$</span>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -222,14 +403,13 @@ export async function generateHTMLOutput(messages, totalCost) {
             
             // Update button to "Save" state
             editButton.innerHTML = '💾 שמור';
-            editButton.style.background = 'linear-gradient(145deg, #10b981, #059669)';
+            editButton.className = 'btn btn-secondary btn-sm';
             
             textDiv.innerHTML = \`
-                <textarea id="edit-\${msgIndex}" class="edit-textarea w-full p-4 resize-none" rows="4" placeholder="ערוך את הטקסט כאן...">\${originalText}</textarea>
+                <textarea id="edit-\${msgIndex}" class="edit-textarea resize-none" rows="4" placeholder="ערוך את הטקסט כאן...">\${originalText}</textarea>
                 <div class="mt-3 flex gap-2">
                     <button onclick="cancelEdit(\${msgIndex})" 
-                            class="action-btn text-white px-4 py-2 rounded-lg text-sm font-medium"
-                            style="--btn-from: #6b7280; --btn-to: #4b5563;">
+                            class="btn btn-outline btn-sm">
                         🚫 בטל
                     </button>
                 </div>
@@ -249,7 +429,7 @@ export async function generateHTMLOutput(messages, totalCost) {
             
             // Reset button to "Edit" state
             editButton.innerHTML = '✏️ ערוך טקסט';
-            editButton.style.background = 'linear-gradient(145deg, #f59e0b, #d97706)';
+            editButton.className = 'btn btn-ghost btn-sm';
         }
         
         function cancelEdit(msgIndex) {
@@ -263,7 +443,7 @@ export async function generateHTMLOutput(messages, totalCost) {
             
             // Reset button to "Edit" state
             editButton.innerHTML = '✏️ ערוך טקסט';
-            editButton.style.background = 'linear-gradient(145deg, #f59e0b, #d97706)';
+            editButton.className = 'btn btn-ghost btn-sm';
         }
         
         function toggleMergeMode() {
@@ -396,78 +576,94 @@ async function generateMessagesHTML(messages) {
             // Audio message block with actual audio file
             const audioData = await generateAudioData(msg);
             return `
-                <div id="message-${index}" class="message-block audio-message ${speakerClass} p-6 rounded-2xl shadow-lg" 
+                <div class="card message-card ${speakerClass} mb-4" id="message-${index}" 
                      data-sender="${msg.sender.replace(/"/g, '&quot;')}" onclick="selectMessageForMerge(${index})">
-                    <div class="message-header flex items-center justify-between mb-4">
-                        <div class="text-sm font-semibold text-gray-800">${msg.timestamp} - ${msg.sender}</div>
-                        <div class="flex items-center gap-3">
-                            ${msg.transcriptionCost > 0 ? `<span class="message-badge bg-emerald-100 text-emerald-800 rounded-full">$${msg.transcriptionCost.toFixed(4)}</span>` : ''}
+                    <div class="card-header pb-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="text-sm font-medium text-muted-foreground">${msg.timestamp}</div>
+                                <div class="text-sm font-semibold">${msg.sender}</div>
+                                ${msg.transcriptionCost > 0 ? `<span class="badge badge-secondary">$${msg.transcriptionCost.toFixed(4)}</span>` : ''}
+                            </div>
                             <button id="edit-btn-${index}" onclick="event.stopPropagation(); editMessage(${index})" 
-                                    class="edit-btn text-white px-4 py-2 rounded-xl text-xs"
-                                    style="background: linear-gradient(145deg, #f59e0b, #d97706);">
+                                    class="btn btn-ghost btn-sm">
                                 ✏️ ערוך טקסט
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Audio Player Section -->
-                    <div class="bg-white bg-opacity-90 rounded-xl p-4 mb-4 shadow-inner">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-sm font-semibold text-gray-700">🎵 הודעה קולית</span>
+                    <div class="card-content space-y-4">
+                        <!-- Audio Player Section -->
+                        <div class="rounded-md border bg-muted/30 p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">🎵</span>
+                                <span class="text-sm font-medium text-muted-foreground">הודעה קולית</span>
+                            </div>
+                            ${audioData}
                         </div>
-                        ${audioData}
-                    </div>
-                    
-                    <!-- Transcription Section -->
-                    <div class="bg-white bg-opacity-90 rounded-xl p-4 shadow-inner">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-sm font-semibold text-gray-700">📝 תמלול</span>
+                        
+                        <!-- Transcription Section -->
+                        <div class="rounded-md border bg-muted/30 p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">📝</span>
+                                <span class="text-sm font-medium text-muted-foreground">תמלול</span>
+                            </div>
+                            <div id="text-${index}" class="text-sm leading-relaxed">${formatMessageText(msg.text)}</div>
                         </div>
-                        <div id="text-${index}" class="message-text text-gray-800">${formatMessageText(msg.text)}</div>
                     </div>
                 </div>
             `;
         } else if (isAudioFilename) {
             // Audio filename message block (without actual audio file)
             return `
-                <div id="message-${index}" class="message-block audio-message ${speakerClass} p-6 rounded-2xl shadow-lg" 
+                <div class="card message-card ${speakerClass} mb-4" id="message-${index}" 
                      data-sender="${msg.sender.replace(/"/g, '&quot;')}" onclick="selectMessageForMerge(${index})">
-                    <div class="message-header flex items-center justify-between mb-4">
-                        <div class="text-sm font-semibold text-gray-800">${msg.timestamp} - ${msg.sender}</div>
-                        <div class="flex items-center gap-3">
+                    <div class="card-header pb-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="text-sm font-medium text-muted-foreground">${msg.timestamp}</div>
+                                <div class="text-sm font-semibold">${msg.sender}</div>
+                            </div>
                             <button id="edit-btn-${index}" onclick="event.stopPropagation(); editMessage(${index})" 
-                                    class="edit-btn text-white px-4 py-2 rounded-xl text-xs"
-                                    style="background: linear-gradient(145deg, #f59e0b, #d97706);">
+                                    class="btn btn-ghost btn-sm">
                                 ✏️ ערוך טקסט
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Audio Filename Section -->
-                    <div class="bg-white bg-opacity-90 rounded-xl p-4 shadow-inner">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="text-sm font-semibold text-gray-700">🎵 קובץ אודיו</span>
+                    <div class="card-content">
+                        <!-- Audio Filename Section -->
+                        <div class="rounded-md border bg-muted/30 p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-sm font-medium">🎵</span>
+                                <span class="text-sm font-medium text-muted-foreground">קובץ אודיו</span>
+                            </div>
+                            <div id="text-${index}" class="text-sm leading-relaxed">${formatMessageText(msg.text)}</div>
                         </div>
-                        <div id="text-${index}" class="message-text text-gray-800">${formatMessageText(msg.text)}</div>
                     </div>
                 </div>
             `;
         } else {
             // Regular text message block
             return `
-                <div id="message-${index}" class="message-block text-message ${speakerClass} p-6 rounded-2xl shadow-lg" 
+                <div class="card message-card ${speakerClass} mb-4" id="message-${index}" 
                      data-sender="${msg.sender.replace(/"/g, '&quot;')}" onclick="selectMessageForMerge(${index})">
-                    <div class="message-header flex items-center justify-between mb-4">
-                        <div class="text-sm font-semibold text-gray-800">${msg.timestamp} - ${msg.sender}</div>
-                        <div class="flex items-center gap-3">
+                    <div class="card-header pb-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="text-sm font-medium text-muted-foreground">${msg.timestamp}</div>
+                                <div class="text-sm font-semibold">${msg.sender}</div>
+                            </div>
                             <button id="edit-btn-${index}" onclick="event.stopPropagation(); editMessage(${index})" 
-                                    class="edit-btn text-white px-4 py-2 rounded-xl text-xs"
-                                    style="background: linear-gradient(145deg, #3b82f6, #1d4ed8);">
+                                    class="btn btn-ghost btn-sm">
                                 ✏️ ערוך טקסט
                             </button>
                         </div>
                     </div>
-                    <div id="text-${index}" class="message-text text-gray-800">${formatMessageText(msg.text)}</div>
+                    
+                    <div class="card-content">
+                        <div id="text-${index}" class="text-sm leading-relaxed">${formatMessageText(msg.text)}</div>
+                    </div>
                 </div>
             `;
         }
