@@ -445,6 +445,10 @@ export async function generateHTMLOutput(messages, totalCost) {
                         <p class="text-base text-muted-foreground font-medium">מרכיב הודעות ומקבצים תמלולי שמע עם עיצוב מודרני</p>
                     </div>
                     <div class="flex items-center gap-3">
+                        <button id="soundToggleBtn" onclick="toggleSound()" 
+                                class="btn btn-ghost btn-sm" title="הפעל/כבה צלילי כפתורים">
+                            🔊 כבה צלילים
+                        </button>
                         <button id="mergeBtn" onclick="toggleMergeMode()" 
                                 class="btn btn-primary btn-default">
                             🔗 מצב מיזוג הודעות
@@ -499,7 +503,77 @@ export async function generateHTMLOutput(messages, totalCost) {
         let mergeMode = false;
         let selectedMessages = new Set();
         
+        // Audio Context for button click sounds
+        let audioContext;
+        let soundEnabled = true;
+        
+        // Initialize audio context on first user interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // Toggle sound on/off
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundBtn = document.getElementById('soundToggleBtn');
+            const soundIcon = soundEnabled ? '🔊' : '🔇';
+            const soundText = soundEnabled ? 'כבה צלילים' : 'הפעל צלילים';
+            soundBtn.innerHTML = soundIcon + ' ' + soundText;
+            
+            // Play a test sound when enabling
+            if (soundEnabled) {
+                playButtonSound(600, 100, 'click');
+            }
+        }
+        
+        // Play button click sound
+        function playButtonSound(frequency = 800, duration = 100, type = 'click') {
+            if (!soundEnabled) return;
+            
+            initAudio();
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Different sounds for different button types
+            switch(type) {
+                case 'edit':
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+                    break;
+                case 'save':
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+                    break;
+                case 'merge':
+                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.15);
+                    break;
+                case 'cancel':
+                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+                    break;
+                default: // 'click'
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            }
+            
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+        }
+        
         function editMessage(msgIndex) {
+            playButtonSound(600, 120, 'edit');
+            
             const textDiv = document.getElementById('text-' + msgIndex);
             const editButton = document.getElementById('edit-btn-' + msgIndex);
             
@@ -519,20 +593,20 @@ export async function generateHTMLOutput(messages, totalCost) {
             editButton.innerHTML = '💾 שמור';
             editButton.className = 'btn btn-secondary btn-sm';
             
-            textDiv.innerHTML = \`
-                <textarea id="edit-\${msgIndex}" class="edit-textarea resize-none" rows="4" placeholder="ערוך את הטקסט כאן...">\${originalText}</textarea>
-                <div class="mt-3 flex gap-2">
-                    <button onclick="cancelEdit(\${msgIndex})" 
-                            class="btn btn-outline btn-sm">
-                        🚫 בטל
-                    </button>
-                </div>
-            \`;
+            textDiv.innerHTML = 
+                '<textarea id="edit-' + msgIndex + '" class="edit-textarea resize-none" rows="4" placeholder="ערוך את הטקסט כאן...">' + originalText + '</textarea>' +
+                '<div class="mt-3 flex gap-2">' +
+                    '<button onclick="cancelEdit(' + msgIndex + ')" class="btn btn-outline btn-sm">' +
+                        '🚫 בטל' +
+                    '</button>' +
+                '</div>';
             textDiv.classList.add('edit-mode');
             document.getElementById('edit-' + msgIndex).focus();
         }
         
         function saveMessage(msgIndex) {
+            playButtonSound(800, 150, 'save');
+            
             const textDiv = document.getElementById('text-' + msgIndex);
             const editButton = document.getElementById('edit-btn-' + msgIndex);
             const newText = document.getElementById('edit-' + msgIndex).value;
@@ -547,6 +621,8 @@ export async function generateHTMLOutput(messages, totalCost) {
         }
         
         function cancelEdit(msgIndex) {
+            playButtonSound(300, 120, 'cancel');
+            
             const textDiv = document.getElementById('text-' + msgIndex);
             const editButton = document.getElementById('edit-btn-' + msgIndex);
             
@@ -561,6 +637,8 @@ export async function generateHTMLOutput(messages, totalCost) {
         }
         
         function toggleMergeMode() {
+            playButtonSound(400, 180, 'merge');
+            
             mergeMode = !mergeMode;
             const container = document.getElementById('messagesContainer');
             const instructions = document.getElementById('mergeInstructions');
@@ -582,6 +660,7 @@ export async function generateHTMLOutput(messages, totalCost) {
         }
         
         function cancelMergeMode() {
+            playButtonSound(250, 150, 'cancel');
             mergeMode = false;
             selectedMessages.clear();
             const container = document.getElementById('messagesContainer');
@@ -607,6 +686,8 @@ export async function generateHTMLOutput(messages, totalCost) {
         function selectMessageForMerge(msgIndex) {
             if (!mergeMode) return;
             
+            playButtonSound(500, 80, 'click');
+            
             const messageBlock = document.getElementById('message-' + msgIndex);
             const sender = messageBlock.dataset.sender;
             
@@ -630,6 +711,8 @@ export async function generateHTMLOutput(messages, totalCost) {
         }
         
         function confirmMerge() {
+            playButtonSound(1000, 200, 'save');
+            
             if (selectedMessages.size < 2) {
                 alert('יש לבחור לפחות 2 הודעות למיזוג');
                 return;
