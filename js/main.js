@@ -1,11 +1,10 @@
-import appState from './core/state.js?v=12';
-import { UIController } from './ui/controller.js?v=12';
-import { organizeFiles, validateFiles, readFileAsText, downloadFile } from './utils/fileHandler.js?v=12';
-import { parseChatContent } from './core/parser.js?v=12';
-import { processAudioMessages } from './core/processor.js?v=12';
-import { cleanAndFilterMessages } from './core/messageCleaner.js?v=12';
-import { mergeConsecutiveMessages } from './core/messageMerger.js?v=12';
-import { generateHTMLOutput } from './utils/htmlGenerator.js?v=12';
+import appState from './core/state.js?v=13';
+import { UIController } from './ui/controller.js?v=13';
+import { organizeFiles, validateFiles, readFileAsText, downloadFile } from './utils/fileHandler.js?v=13';
+import { parseChatContent } from './core/parser.js?v=13';
+import { processAudioMessages } from './core/processor.js?v=13';
+// Removed message cleaning and merging imports
+import { generateHTMLOutput } from './utils/htmlGenerator.js?v=13';
 
 // Try to load config file
 let config = null;
@@ -27,15 +26,7 @@ class WhatsAppChatConverter {
     }
 
     initializeConfig() {
-        // Apply default settings if available
-        if (this.config?.defaultSettings) {
-            if (this.config.defaultSettings.cleanMessages !== undefined) {
-                this.ui.elements.cleanMessages.checked = this.config.defaultSettings.cleanMessages;
-            }
-            if (this.config.defaultSettings.mergeMessages !== undefined) {
-                this.ui.elements.mergeMessages.checked = this.config.defaultSettings.mergeMessages;
-            }
-        }
+        // Removed message cleaning and merging config
     }
 
     initializeEventListeners() {
@@ -125,19 +116,8 @@ class WhatsAppChatConverter {
             this.ui.updateTotalCost(totalCost);
             console.log('Total cost updated in UI');
             
-            // Apply filters
-            const options = this.ui.getOptions();
+            // No message cleaning or merging - use processed messages directly
             let finalMessages = processedMessages;
-            
-            if (options.cleanMessages) {
-                this.ui.updateStatus('מנקה הודעות מערכת...');
-                finalMessages = cleanAndFilterMessages(finalMessages);
-            }
-            
-            if (options.mergeMessages) {
-                this.ui.updateStatus('ממזג הודעות רצופות...');
-                finalMessages = mergeConsecutiveMessages(finalMessages);
-            }
             
             // Update state and show preview
             appState.setProcessedChat(finalMessages);
@@ -193,7 +173,7 @@ class WhatsAppChatConverter {
 }
 
 // Debug: Check if updated code is loaded
-console.log('WhatsApp Chat Converter v12 - Fixed standalone audio message parsing!');
+console.log('WhatsApp Chat Converter v13 - Fixed Windows line endings parser bug!');
 
 // Initialize the application when DOM is ready
 if (document.readyState === 'loading') {

@@ -21,16 +21,18 @@ export function parseChatContent(content) {
     let currentMessage = null;
     
     for (const line of lines) {
-        const message = parseMessage(line);
+        // Remove Windows line endings (\r) that can interfere with parsing
+        const cleanLine = line.replace(/\r$/, '');
+        const message = parseMessage(cleanLine);
         if (message) {
             // New message found
             if (currentMessage) {
                 messages.push(currentMessage);
             }
             currentMessage = message;
-        } else if (currentMessage && line.trim()) {
+        } else if (currentMessage && cleanLine.trim()) {
             // Check if this line is a standalone audio attachment
-            const audioMatch = line.trim().match(AUDIO_ATTACHMENT_REGEX);
+            const audioMatch = cleanLine.trim().match(AUDIO_ATTACHMENT_REGEX);
             if (audioMatch) {
                 // This is a standalone audio message - treat as separate message
                 // First, save the current message
@@ -41,12 +43,12 @@ export function parseChatContent(content) {
                 currentMessage = {
                     timestamp: currentMessage.timestamp, // Same timestamp as previous
                     sender: currentMessage.sender, // Same sender
-                    text: line.trim(),
-                    originalLine: line
+                    text: cleanLine.trim(),
+                    originalLine: cleanLine
                 };
             } else {
                 // Normal continuation of previous message
-                currentMessage.text += '\n' + line.trim();
+                currentMessage.text += '\n' + cleanLine.trim();
             }
         }
     }

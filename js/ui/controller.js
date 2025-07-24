@@ -5,8 +5,6 @@ export class UIController {
         this.elements = {
             fileInput: document.getElementById('fileInput'),
             processBtn: document.getElementById('processBtn'),
-            cleanMessages: document.getElementById('cleanMessages'),
-            mergeMessages: document.getElementById('mergeMessages'),
             statusSection: document.getElementById('statusSection'),
             statusLog: document.getElementById('statusLog'),
             progressBar: document.getElementById('progressBar'),
@@ -28,8 +26,7 @@ export class UIController {
 
     getOptions() {
         return {
-            cleanMessages: this.elements.cleanMessages.checked,
-            mergeMessages: this.elements.mergeMessages.checked
+            // Removed message cleaning and merging options
         };
     }
 
