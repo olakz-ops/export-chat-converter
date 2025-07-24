@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Test - Improved Audio Layout</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .message-text { word-wrap: break-word; }
+        
+        /* Custom audio player styling */
+        audio {
+            outline: none;
+            border-radius: 8px;
+        }
+        audio::-webkit-media-controls-panel {
+            background-color: #f8fafc;
+            border-radius: 8px;
+        }
+        audio::-webkit-media-controls-play-button {
+            background-color: #3b82f6;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        audio::-webkit-media-controls-timeline {
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            margin: 0 8px;
+        }
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            font-size: 12px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">🧪 UI Test - Improved Audio Messages</h1>
+        <div class="space-y-2">
+            
+            <!-- Regular text message for comparison -->
+            <div class="message mb-4 p-3 rounded-lg bg-gray-50">
+                <div class="text-sm text-gray-600 mb-1">10/6/2025, 10:17:39 - יעקב לוי</div>
+                <div class="message-text">אהלן רפאל מה שלומך ? זה יעקב אח של עליזה לגביי המכשיר תדרים ותליון</div>
+            </div>
+
+            <!-- NEW: Improved audio message layout -->
+            <div class="message mb-4 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400">
+                <div class="text-sm text-gray-600 mb-2">10/6/2025, 10:17:41 - רפאל בן דור</div>
+                
+                <!-- Audio Player Section -->
+                <div class="bg-white rounded-lg p-3 mb-3 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">🎵 הודעה קולית</span>
+                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">עלות: $0.0013</span>
+                    </div>
+                    <!-- Simulated audio player with full width -->
+                    <audio controls class="w-full h-10 bg-gray-100 rounded-lg shadow-inner" style="width: 100%;">
+                        <source src="data:audio/ogg;base64,T2dnUwACAAAAAAAAAAA9BEemAAAAALu+73sBE09wdXNIZWFkAQEAD4C7AAAAAABPZ2dTAAAAAAAAAAAAAD0ER6YBAAAAVdu9hQEYT3B1c1RhZ3MIAAAAUmVjb3JkZXIAAAAAT2dnUwAAgH0CAAAAAAA9BEemAgAAAJ+BdE..." type="audio/ogg">
+                        הדפדפן שלך לא תומך בהשמעת אודיו
+                    </audio>
+                    <div class="mt-2 text-xs text-gray-500 text-center">
+                        גודל קובץ: 37.7 KB
+                    </div>
+                </div>
+                
+                <!-- Transcription Section -->
+                <div class="bg-white rounded-lg p-3 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">📝 תמלול</span>
+                        <button onclick="alert('Edit clicked!')" 
+                                class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">
+                            ✏️ ערוך
+                        </button>
+                    </div>
+                    <div class="message-text text-gray-800 leading-relaxed">טוב, עכשיו נפל לי עוד הסימון. אני כבר שלחתי את, ביקשתי מליאור שידבר איתך אתמול, אחרי ששלחתי לאליזה את התמונות של הטיליונים שיש במלאי. הוא דיבר איתך? זה כבר אמור להיות סגור לדעתי, או שהוא לא דיבר איתך. אם לא, אני אשב לו על הראש. זה בקשר לטיליונים.</div>
+                </div>
+            </div>
+
+            <!-- Another audio message example -->
+            <div class="message mb-4 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400">
+                <div class="text-sm text-gray-600 mb-2">11/6/2025, 12:34:39 - רפאל בן דור</div>
+                
+                <!-- Audio Player Section -->
+                <div class="bg-white rounded-lg p-3 mb-3 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">🎵 הודעה קולית</span>
+                        <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">עלות: $0.0019</span>
+                    </div>
+                    <audio controls class="w-full h-10 bg-gray-100 rounded-lg shadow-inner" style="width: 100%;">
+                        <source src="#" type="audio/ogg">
+                        הדפדפן שלך לא תומך בהשמעת אודיו
+                    </audio>
+                    <div class="mt-2 text-xs text-gray-500 text-center">
+                        גודל קובץ: 72.6 KB
+                    </div>
+                </div>
+                
+                <!-- Transcription Section -->
+                <div class="bg-white rounded-lg p-3 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">📝 תמלול</span>
+                        <button onclick="alert('Edit clicked!')" 
+                                class="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full transition-colors">
+                            ✏️ ערוך
+                        </button>
+                    </div>
+                    <div class="message-text text-gray-800 leading-relaxed">טוב, קודם כל, בנוגע למחירים, את המחירים שאתה ראית היו, שהייתה קבוצת רכישה, רכישה קבוצתית, 3,300, איפה שראית את זה, זה גם כתוב שם, כרגע אין רכישות קבוצתיות, זה רכישות אישיות, וצערנו, זה המחיר.</div>
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h3 class="font-bold text-green-800 mb-2">✅ UI Improvements Applied:</h3>
+            <ul class="text-sm text-green-700 space-y-1">
+                <li>🎨 Unified audio message layout with gradient background</li>
+                <li>📱 Full-width audio player with improved styling</li>
+                <li>🎵 Combined audio player and transcription in single message</li>
+                <li>✏️ Better positioned edit button with modern styling</li>
+                <li>📊 Visual separation between audio and transcription sections</li>
+                <li>💾 File size information display</li>
+                <li>🎯 No more redundant blocks - everything in one cohesive unit</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

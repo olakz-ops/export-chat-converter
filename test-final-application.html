@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Final Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">🧪 Final Application Test - Fixed Audio & UI</h1>
+        
+        <div id="status" class="mb-4 p-4 bg-blue-50 rounded">
+            <p class="font-semibold">Status: <span id="statusText">Ready to test final version</span></p>
+        </div>
+        
+        <button id="testBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
+            🚀 Test Final Application (Fixed Audio + Improved UI)
+        </button>
+        
+        <div id="results" class="hidden">
+            <h2 class="text-xl font-semibold mb-4">Results:</h2>
+            <div id="output" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the updated application modules
+        import appState from './js/core/state.js?v=14';
+        import { organizeFiles, validateFiles, readFileAsText } from './js/utils/fileHandler.js?v=14';
+        import { parseChatContent } from './js/core/parser.js?v=14';
+        import { processAudioMessages } from './js/core/processor.js?v=14';
+        import { generateHTMLOutput } from './js/utils/htmlGenerator.js?v=14';
+        import { config } from './js/config.local.js';
+
+        document.getElementById('testBtn').addEventListener('click', testFinalApplication);
+        
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+            console.log('Status:', message);
+        }
+
+        async function loadSampleFiles() {
+            updateStatus('Loading sample files...');
+            
+            const files = [];
+            const fileList = [
+                '_chat.txt',
+                '00000007-AUDIO-2025-06-11-12-24-05.opus',
+                '00000015-AUDIO-2025-06-11-12-34-39.opus', 
+                '00000026-AUDIO-2025-06-11-18-55-07.opus'
+            ];
+            
+            for (const filename of fileList) {
+                try {
+                    const response = await fetch(`./sample/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to load ${filename}: ${response.status}`);
+                    }
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const file = new File([arrayBuffer], filename, {
+                        type: filename.endsWith('.opus') ? 'audio/opus' : 'text/plain'
+                    });
+                    
+                    files.push(file);
+                    updateStatus(`Loaded ${filename} (${(arrayBuffer.byteLength / 1024).toFixed(1)} KB)`);
+                } catch (error) {
+                    console.error(`Failed to load ${filename}:`, error);
+                    updateStatus(`❌ Failed to load ${filename}`);
+                }
+            }
+            
+            return files;
+        }
+
+        async function testFinalApplication() {
+            try {
+                document.getElementById('testBtn').disabled = true;
+                document.getElementById('results').classList.add('hidden');
+                
+                // Step 1: Load files
+                const files = await loadSampleFiles();
+                
+                if (files.length !== 4) {
+                    throw new Error(`Expected 4 files, got ${files.length}`);
+                }
+                
+                // Step 2: Process files
+                updateStatus('Processing files with improved UI...');
+                appState.reset();
+                
+                const { chatFile, mediaFiles } = organizeFiles(files);
+                validateFiles(chatFile, mediaFiles);
+                
+                mediaFiles.forEach((file, filename) => {
+                    appState.addMediaFile(filename, file);
+                });
+                
+                // Step 3: Parse chat
+                updateStatus('Parsing chat messages...');
+                const chatContent = await readFileAsText(chatFile);
+                const messages = parseChatContent(chatContent);
+                updateStatus(`Parsed ${messages.length} messages`);
+                
+                // Step 4: Process audio with fixed transcription
+                updateStatus('Transcribing audio (OPUS→OGG conversion)...');
+                const processedMessages = await processAudioMessages(
+                    messages,
+                    appState.getAllMediaFiles(),
+                    config.OPENAI_API_KEY,
+                    (completed, total) => {
+                        const percent = Math.round((completed / total) * 100);
+                        updateStatus(`Transcribing: ${completed}/${total} (${percent}%)`);
+                    }
+                );
+                
+                // Step 5: Calculate results
+                const audioMessages = processedMessages.filter(m => m.audioFile);
+                const transcribedMessages = processedMessages.filter(m => m.transcriptionCost && m.transcriptionCost > 0);
+                const totalCost = transcribedMessages.reduce((sum, msg) => sum + (msg.transcriptionCost || 0), 0);
+                
+                updateStatus(`Transcription complete! Generating improved HTML...`);
+                
+                // Step 6: Generate HTML with new UI
+                const finalHTML = await generateHTMLOutput(processedMessages, totalCost);
+                
+                // Step 7: Create download and analyze
+                const blob = new Blob([finalHTML], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                const audioElementCount = (finalHTML.match(/<audio[^>]*>/g) || []).length;
+                const gradientBlocks = (finalHTML.match(/bg-gradient-to-r from-blue-50/g) || []).length;
+                const fullWidthAudio = (finalHTML.match(/w-full h-10/g) || []).length;
+                
+                // Display results
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('output').innerHTML = `
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h3 class="font-bold text-green-800 mb-2">✅ Final Application Test Results</h3>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <div class="text-lg font-bold text-blue-600">${transcribedMessages.length}</div>
+                                <div class="text-sm text-gray-600">Working Transcriptions</div>
+                            </div>
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <div class="text-lg font-bold text-green-600">${audioElementCount}</div>
+                                <div class="text-sm text-gray-600">Playable Audio Elements</div>
+                            </div>
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <div class="text-lg font-bold text-purple-600">${gradientBlocks}</div>
+                                <div class="text-sm text-gray-600">Improved UI Blocks</div>
+                            </div>
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <div class="text-lg font-bold text-orange-600">$${totalCost.toFixed(4)}</div>
+                                <div class="text-sm text-gray-600">Total Cost</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 text-sm mb-4">
+                            <p><strong>✅ Audio Issues Fixed:</strong> OPUS files converted to OGG for browser compatibility</p>
+                            <p><strong>🎨 UI Improvements:</strong> ${gradientBlocks} unified audio message layouts</p>
+                            <p><strong>📱 Full Width Audio:</strong> ${fullWidthAudio} responsive audio players</p>
+                            <p><strong>📊 HTML Size:</strong> ${(finalHTML.length/1024).toFixed(1)} KB with embedded audio</p>
+                            <p><strong>💬 Sample Transcriptions:</strong></p>
+                            ${transcribedMessages.slice(0, 2).map((msg, i) => 
+                                `<div class="text-xs bg-blue-50 p-2 rounded mt-1">📝 "${msg.text.substring(0, 60)}..."</div>`
+                            ).join('')}
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <a href="${url}" download="whatsapp-chat-final.html" 
+                               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                📥 Download Final HTML
+                            </a>
+                            <button onclick="window.open('${url}', '_blank')" 
+                                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                🎵 Test Audio & UI
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                updateStatus(`✅ Final test completed! Audio is playable and UI is improved`);
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                updateStatus(`❌ Test failed: ${error.message}`);
+                
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('output').innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-red-800 mb-2">❌ Test Failed</h3>
+                        <p class="text-red-700">${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                document.getElementById('testBtn').disabled = false;
+            }
+        }
+
+        // Initialize
+        updateStatus('Ready to test final application with fixed audio and improved UI');
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Test - Fixed WhatsApp Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">🧪 Testing Fixed WhatsApp Chat Converter</h1>
+        
+        <div id="status" class="mb-4 p-4 bg-blue-50 rounded">
+            <p class="font-semibold">Status: <span id="statusText">Ready to test with fixed transcription</span></p>
+        </div>
+        
+        <button id="testBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
+            🚀 Test Fixed Application with Real Files
+        </button>
+        
+        <div id="results" class="hidden">
+            <h2 class="text-xl font-semibold mb-4">Results:</h2>
+            <div id="output" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the actual fixed application modules
+        import appState from './js/core/state.js?v=13';
+        import { organizeFiles, validateFiles, readFileAsText } from './js/utils/fileHandler.js?v=13';
+        import { parseChatContent } from './js/core/parser.js?v=13';
+        import { processAudioMessages } from './js/core/processor.js?v=13';
+        import { generateHTMLOutput } from './js/utils/htmlGenerator.js?v=13';
+        import { config } from './js/config.local.js';
+
+        document.getElementById('testBtn').addEventListener('click', testFixedApplication);
+        
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+            console.log('Status:', message);
+        }
+
+        async function loadSampleFiles() {
+            updateStatus('Loading sample files...');
+            
+            const files = [];
+            const fileList = [
+                '_chat.txt',
+                '00000007-AUDIO-2025-06-11-12-24-05.opus',
+                '00000015-AUDIO-2025-06-11-12-34-39.opus', 
+                '00000026-AUDIO-2025-06-11-18-55-07.opus'
+            ];
+            
+            for (const filename of fileList) {
+                try {
+                    const response = await fetch(`./sample/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to load ${filename}: ${response.status}`);
+                    }
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const file = new File([arrayBuffer], filename, {
+                        type: filename.endsWith('.opus') ? 'audio/opus' : 'text/plain'
+                    });
+                    
+                    files.push(file);
+                    updateStatus(`Loaded ${filename} (${(arrayBuffer.byteLength / 1024).toFixed(1)} KB)`);
+                } catch (error) {
+                    console.error(`Failed to load ${filename}:`, error);
+                    updateStatus(`❌ Failed to load ${filename}`);
+                }
+            }
+            
+            return files;
+        }
+
+        async function testFixedApplication() {
+            try {
+                document.getElementById('testBtn').disabled = true;
+                document.getElementById('results').classList.add('hidden');
+                
+                // Step 1: Load files
+                const files = await loadSampleFiles();
+                
+                if (files.length !== 4) {
+                    throw new Error(`Expected 4 files, got ${files.length}`);
+                }
+                
+                // Step 2: Process files exactly like main app
+                updateStatus('Organizing and validating files...');
+                appState.reset();
+                
+                const { chatFile, mediaFiles } = organizeFiles(files);
+                validateFiles(chatFile, mediaFiles);
+                
+                mediaFiles.forEach((file, filename) => {
+                    appState.addMediaFile(filename, file);
+                });
+                
+                // Step 3: Parse chat
+                updateStatus('Parsing chat messages...');
+                const chatContent = await readFileAsText(chatFile);
+                const messages = parseChatContent(chatContent);
+                updateStatus(`Parsed ${messages.length} messages`);
+                
+                // Step 4: Process audio with FIXED transcription
+                updateStatus('Transcribing audio with fixed OPUS support...');
+                const processedMessages = await processAudioMessages(
+                    messages,
+                    appState.getAllMediaFiles(),
+                    config.OPENAI_API_KEY,
+                    (completed, total) => {
+                        const percent = Math.round((completed / total) * 100);
+                        updateStatus(`Transcribing (OPUS→OGG): ${completed}/${total} (${percent}%)`);
+                    }
+                );
+                
+                // Step 5: Calculate results
+                const audioMessages = processedMessages.filter(m => m.audioFile);
+                const transcribedMessages = processedMessages.filter(m => m.transcriptionCost && m.transcriptionCost > 0);
+                const totalCost = transcribedMessages.reduce((sum, msg) => sum + (msg.transcriptionCost || 0), 0);
+                
+                updateStatus(`Processing complete! Transcribed ${transcribedMessages.length} audio messages`);
+                
+                // Step 6: Generate HTML
+                updateStatus('Generating final HTML with transcriptions...');
+                const finalHTML = await generateHTMLOutput(processedMessages, totalCost);
+                
+                // Step 7: Create download and display results
+                const blob = new Blob([finalHTML], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                const errorCount = processedMessages.filter(m => m.transcriptionError).length;
+                
+                // Display results
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('output').innerHTML = `
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-green-800 mb-2">✅ Fixed Application Test Results</h3>
+                        <ul class="space-y-1 text-sm">
+                            <li>📄 Total messages: ${messages.length}</li>
+                            <li>🎵 Audio messages detected: ${audioMessages.length}</li>
+                            <li>✅ Successfully transcribed: ${transcribedMessages.length}</li>
+                            <li>❌ Transcription errors: ${errorCount}</li>
+                            <li>💰 Total transcription cost: $${totalCost.toFixed(4)}</li>
+                            <li>📊 HTML size: ${(finalHTML.length / 1024).toFixed(1)} KB</li>
+                        </ul>
+                        
+                        <div class="mt-4 space-y-2">
+                            <p class="font-semibold">Sample transcriptions:</p>
+                            ${transcribedMessages.slice(0, 2).map((msg, i) => 
+                                `<p class="text-xs bg-blue-50 p-2 rounded">${i+1}. "${msg.text.substring(0, 80)}..."</p>`
+                            ).join('')}
+                        </div>
+                        
+                        <div class="mt-4 flex gap-2">
+                            <a href="${url}" download="whatsapp-chat-fixed.html" 
+                               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                📥 Download Fixed HTML
+                            </a>
+                            <button onclick="window.open('${url}', '_blank')" 
+                                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                👁️ Test Audio & Transcriptions
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                updateStatus(`✅ Test completed! ${transcribedMessages.length} audio files transcribed successfully`);
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                updateStatus(`❌ Test failed: ${error.message}`);
+                
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('output').innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-red-800 mb-2">❌ Test Failed</h3>
+                        <p class="text-red-700">${error.message}</p>
+                        <pre class="mt-2 text-xs bg-red-100 p-2 rounded overflow-auto">${error.stack}</pre>
+                    </div>
+                `;
+            } finally {
+                document.getElementById('testBtn').disabled = false;
+            }
+        }
+
+        // Initialize
+        updateStatus('Ready to test fixed application with OPUS→OGG conversion');
+    </script>
+</body>
+</html>

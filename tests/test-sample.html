@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Sample Data</title>
+</head>
+<body>
+    <h1>Test Sample Data</h1>
+    <p>Upload the sample files:</p>
+    <ul>
+        <li>sample/_chat.txt</li>
+        <li>sample/00000007-AUDIO-2025-06-11-12-24-05.opus</li>
+        <li>sample/00000015-AUDIO-2025-06-11-12-34-39.opus</li>
+        <li>sample/00000026-AUDIO-2025-06-11-18-55-07.opus</li>
+    </ul>
+    
+    <input type="file" id="fileInput" multiple>
+    <button onclick="testFiles()">Test Files</button>
+    
+    <div id="results"></div>
+    
+    <script type="module">
+        import { parseChatContent } from './js/core/parser.js?v=9';
+        import { detectAudioAttachment } from './js/core/parser.js?v=9';
+        
+        window.testFiles = async function() {
+            const files = document.getElementById('fileInput').files;
+            const results = document.getElementById('results');
+            
+            // Find chat file
+            let chatFile = null;
+            const mediaFiles = new Map();
+            
+            for (const file of files) {
+                if (file.name.includes('_chat.txt')) {
+                    chatFile = file;
+                } else {
+                    mediaFiles.set(file.name, file);
+                }
+            }
+            
+            if (!chatFile) {
+                results.innerHTML = '<p style="color: red">No _chat.txt file found</p>';
+                return;
+            }
+            
+            // Read and parse chat
+            const chatContent = await readFileAsText(chatFile);
+            const messages = parseChatContent(chatContent);
+            
+            results.innerHTML = `
+                <h2>Test Results:</h2>
+                <p><strong>Messages parsed:</strong> ${messages.length}</p>
+                <p><strong>Media files uploaded:</strong> ${Array.from(mediaFiles.keys()).join(', ')}</p>
+                <h3>Audio Messages Found:</h3>
+            `;
+            
+            let audioCount = 0;
+            messages.forEach((message, index) => {
+                const audioInfo = detectAudioAttachment(message);
+                if (audioInfo && audioInfo.filename) {
+                    audioCount++;
+                    const matched = mediaFiles.has(audioInfo.filename) ? '✅' : '❌';
+                    results.innerHTML += `<p>${matched} Message ${index}: ${audioInfo.filename}</p>`;
+                }
+            });
+            
+            results.innerHTML += `<p><strong>Total audio messages:</strong> ${audioCount}</p>`;
+        }
+        
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+    </script>
+</body>
+</html>

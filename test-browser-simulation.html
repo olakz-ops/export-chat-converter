@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Test - WhatsApp Chat Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">🧪 Testing Real Application with Sample Files</h1>
+        
+        <div id="status" class="mb-4 p-4 bg-blue-50 rounded">
+            <p class="font-semibold">Status: <span id="statusText">Initializing...</span></p>
+        </div>
+        
+        <button id="testBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
+            🚀 Test with Real Sample Files
+        </button>
+        
+        <div id="results" class="hidden">
+            <h2 class="text-xl font-semibold mb-4">Results:</h2>
+            <div id="output" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the actual application modules
+        import { parseChatContent, detectAudioAttachment } from './js/core/parser.js?v=12';
+        import { processAudioMessages } from './js/core/processor.js?v=12';
+        import { generateHTMLOutput } from './js/utils/htmlGenerator.js?v=12';
+        import { config } from './js/config.local.js';
+
+        document.getElementById('testBtn').addEventListener('click', testRealApplication);
+        
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+            console.log('Status:', message);
+        }
+
+        async function loadSampleFiles() {
+            updateStatus('Loading sample files...');
+            
+            const files = new Map();
+            const fileList = [
+                '_chat.txt',
+                '00000007-AUDIO-2025-06-11-12-24-05.opus',
+                '00000015-AUDIO-2025-06-11-12-34-39.opus', 
+                '00000026-AUDIO-2025-06-11-18-55-07.opus'
+            ];
+            
+            for (const filename of fileList) {
+                try {
+                    const response = await fetch(`./sample/${filename}`);
+                    if (!response.ok) {
+                        throw new Error(`Failed to load ${filename}: ${response.status}`);
+                    }
+                    
+                    const arrayBuffer = await response.arrayBuffer();
+                    const file = new File([arrayBuffer], filename, {
+                        type: filename.endsWith('.opus') ? 'audio/opus' : 'text/plain'
+                    });
+                    
+                    files.set(filename, file);
+                    updateStatus(`Loaded ${filename} (${(arrayBuffer.byteLength / 1024).toFixed(1)} KB)`);
+                } catch (error) {
+                    console.error(`Failed to load ${filename}:`, error);
+                    updateStatus(`❌ Failed to load ${filename}`);
+                }
+            }
+            
+            return files;
+        }
+
+        async function testRealApplication() {
+            try {
+                document.getElementById('testBtn').disabled = true;
+                document.getElementById('results').classList.add('hidden');
+                
+                // Step 1: Load files
+                const files = await loadSampleFiles();
+                const chatFile = files.get('_chat.txt');
+                
+                if (!chatFile) {
+                    throw new Error('Chat file not found');
+                }
+                
+                // Step 2: Read and parse chat
+                updateStatus('Reading chat file...');
+                const chatContent = await chatFile.text();
+                
+                updateStatus('Parsing messages...');
+                const messages = parseChatContent(chatContent);
+                updateStatus(`Parsed ${messages.length} messages`);
+                
+                // Step 3: Create media files map (excluding chat.txt)
+                const mediaFiles = new Map();
+                for (const [filename, file] of files.entries()) {
+                    if (filename !== '_chat.txt') {
+                        mediaFiles.set(filename, file);
+                    }
+                }
+                
+                updateStatus(`Found ${mediaFiles.size} media files`);
+                
+                // Step 4: Process audio messages with REAL API
+                updateStatus('Processing audio with OpenAI API...');
+                const processedMessages = await processAudioMessages(
+                    messages,
+                    mediaFiles,
+                    config.OPENAI_API_KEY,
+                    (completed, total) => {
+                        const percent = Math.round((completed / total) * 100);
+                        updateStatus(`Transcribing: ${completed}/${total} (${percent}%)`);
+                    }
+                );
+                
+                // Step 5: Calculate total cost
+                const totalCost = processedMessages.reduce((sum, msg) => {
+                    return sum + (msg.transcriptionCost || 0);
+                }, 0);
+                
+                updateStatus(`Processing complete! Total cost: $${totalCost.toFixed(4)}`);
+                
+                // Step 6: Generate final HTML
+                updateStatus('Generating final HTML...');
+                const finalHTML = await generateHTMLOutput(processedMessages, totalCost);
+                
+                // Step 7: Create downloadable file and display results
+                const blob = new Blob([finalHTML], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                const audioCount = processedMessages.filter(m => m.audioFile).length;
+                const transcribedCount = processedMessages.filter(m => m.transcriptionCost && m.transcriptionCost > 0).length;
+                
+                // Display results
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('output').innerHTML = `
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-green-800 mb-2">✅ Success!</h3>
+                        <ul class="space-y-1 text-sm">
+                            <li>📄 Total messages: ${messages.length}</li>
+                            <li>🎵 Audio messages: ${audioCount}</li>
+                            <li>✅ Successfully transcribed: ${transcribedCount}</li>
+                            <li>💰 Total transcription cost: $${totalCost.toFixed(4)}</li>
+                            <li>📊 HTML size: ${(finalHTML.length / 1024).toFixed(1)} KB</li>
+                        </ul>
+                        <div class="mt-4">
+                            <a href="${url}" download="whatsapp-chat-test.html" 
+                               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                📥 Download HTML File
+                            </a>
+                            <button onclick="window.open('${url}', '_blank')" 
+                                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2">
+                                👁️ Preview HTML
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                updateStatus('✅ Test completed successfully!');
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                updateStatus(`❌ Test failed: ${error.message}`);
+                
+                document.getElementById('results').classList.remove('hidden');
+                document.getElementById('output').innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-red-800 mb-2">❌ Test Failed</h3>
+                        <p class="text-red-700">${error.message}</p>
+                        <pre class="mt-2 text-xs bg-red-100 p-2 rounded overflow-auto">${error.stack}</pre>
+                    </div>
+                `;
+            } finally {
+                document.getElementById('testBtn').disabled = false;
+            }
+        }
+
+        // Initialize
+        updateStatus('Ready to test with real sample files');
+    </script>
+</body>
+</html>

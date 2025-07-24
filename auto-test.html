@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Test - Real Files</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">🧪 Auto Testing with Real Sample Files</h1>
+        
+        <div id="status" class="mb-4 p-4 bg-blue-50 rounded">
+            <p id="statusText">Click START to test the application with your real files</p>
+        </div>
+        
+        <button id="startBtn" onclick="startTest()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4">
+            🚀 START TEST
+        </button>
+        
+        <div id="results" class="hidden space-y-4"></div>
+    </div>
+
+    <script type="module">
+        import appState from './js/core/state.js?v=12';
+        import { organizeFiles, validateFiles, readFileAsText } from './js/utils/fileHandler.js?v=12';
+        import { parseChatContent } from './js/core/parser.js?v=12';
+        import { processAudioMessages } from './js/core/processor.js?v=12';
+        import { generateHTMLOutput } from './js/utils/htmlGenerator.js?v=12';
+        import { config } from './js/config.local.js';
+
+        window.startTest = async function() {
+            const statusEl = document.getElementById('statusText');
+            const resultsEl = document.getElementById('results');
+            const startBtn = document.getElementById('startBtn');
+            
+            startBtn.disabled = true;
+            resultsEl.classList.add('hidden');
+            
+            try {
+                // Load real files from your sample directory
+                statusEl.textContent = '📁 Loading real sample files...';
+                
+                const fileUrls = [
+                    { url: './sample/_chat.txt', name: '_chat.txt', type: 'text/plain' },
+                    { url: './sample/00000007-AUDIO-2025-06-11-12-24-05.opus', name: '00000007-AUDIO-2025-06-11-12-24-05.opus', type: 'audio/opus' },
+                    { url: './sample/00000015-AUDIO-2025-06-11-12-34-39.opus', name: '00000015-AUDIO-2025-06-11-12-34-39.opus', type: 'audio/opus' },
+                    { url: './sample/00000026-AUDIO-2025-06-11-18-55-07.opus', name: '00000026-AUDIO-2025-06-11-18-55-07.opus', type: 'audio/opus' }
+                ];
+                
+                const files = [];
+                for (const fileInfo of fileUrls) {
+                    const response = await fetch(fileInfo.url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const file = new File([arrayBuffer], fileInfo.name, { type: fileInfo.type });
+                    files.push(file);
+                    statusEl.textContent = `✅ Loaded ${fileInfo.name} (${(arrayBuffer.byteLength/1024).toFixed(1)} KB)`;
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                // Process exactly like the real application does
+                statusEl.textContent = '🔄 Processing files with real application logic...';
+                
+                appState.reset();
+                
+                // Organize files
+                const { chatFile, mediaFiles } = organizeFiles(files);
+                validateFiles(chatFile, mediaFiles);
+                
+                mediaFiles.forEach((file, filename) => {
+                    appState.addMediaFile(filename, file);
+                });
+                
+                // Parse chat
+                statusEl.textContent = '📄 Parsing chat content...';
+                const chatContent = await readFileAsText(chatFile);
+                const messages = parseChatContent(chatContent);
+                
+                // Process audio with REAL OpenAI API
+                statusEl.textContent = `🎵 Processing ${messages.length} messages with OpenAI API...`;
+                
+                const processedMessages = await processAudioMessages(
+                    messages,
+                    appState.getAllMediaFiles(),
+                    config.OPENAI_API_KEY,
+                    (completed, total) => {
+                        statusEl.textContent = `🔄 Transcribing audio: ${completed}/${total}`;
+                    }
+                );
+                
+                // Calculate results
+                const audioMessages = processedMessages.filter(m => m.audioFile);
+                const transcribedMessages = processedMessages.filter(m => m.transcriptionCost && m.transcriptionCost > 0);
+                const totalCost = transcribedMessages.reduce((sum, m) => sum + m.transcriptionCost, 0);
+                
+                // Generate HTML
+                statusEl.textContent = '📄 Generating final HTML...';
+                const html = await generateHTMLOutput(processedMessages, totalCost);
+                
+                // Create download
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                
+                // Show results
+                statusEl.textContent = '✅ Test completed successfully!';
+                resultsEl.innerHTML = `
+                    <div class="bg-green-50 p-6 rounded-lg">
+                        <h2 class="text-xl font-bold text-green-800 mb-4">🎉 Test Results</h2>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-white p-3 rounded">
+                                <div class="text-2xl font-bold text-blue-600">${messages.length}</div>
+                                <div class="text-sm text-gray-600">Total Messages</div>
+                            </div>
+                            <div class="bg-white p-3 rounded">
+                                <div class="text-2xl font-bold text-purple-600">${audioMessages.length}</div>
+                                <div class="text-sm text-gray-600">Audio Messages</div>
+                            </div>
+                            <div class="bg-white p-3 rounded">
+                                <div class="text-2xl font-bold text-green-600">${transcribedMessages.length}</div>
+                                <div class="text-sm text-gray-600">Successfully Transcribed</div>
+                            </div>
+                            <div class="bg-white p-3 rounded">
+                                <div class="text-2xl font-bold text-orange-600">$${totalCost.toFixed(4)}</div>
+                                <div class="text-sm text-gray-600">Total Cost</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <p><strong>HTML Size:</strong> ${(html.length/1024).toFixed(1)} KB</p>
+                            <p><strong>Audio Files Embedded:</strong> ${transcribedMessages.length} files with playable audio</p>
+                            <p><strong>Edit Functionality:</strong> Available for all transcribed messages</p>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <a href="${url}" download="whatsapp-chat-real-test.html" 
+                               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                📥 Download HTML
+                            </a>
+                            <button onclick="window.open('${url}', '_blank')" 
+                                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                👁️ Open HTML (Test Audio & Edit)
+                            </button>
+                        </div>
+                    </div>
+                `;
+                resultsEl.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Test failed:', error);
+                statusEl.textContent = `❌ Test failed: ${error.message}`;
+                resultsEl.innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-red-800">❌ Test Failed</h3>
+                        <p class="text-red-700 mt-2">${error.message}</p>
+                    </div>
+                `;
+                resultsEl.classList.remove('hidden');
+            } finally {
+                startBtn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
