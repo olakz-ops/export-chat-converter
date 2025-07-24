@@ -84,9 +84,11 @@ export async function generateHTMLOutput(messages, totalCost) {
         }
         
         body {
-            background-color: hsl(var(--background));
+            background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(210 40% 98%) 100%);
             color: hsl(var(--foreground));
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans Hebrew', sans-serif;
+            line-height: 1.6;
+            letter-spacing: 0.01em;
         }
         
         /* shadcn/ui Button component styles */
@@ -178,20 +180,23 @@ export async function generateHTMLOutput(messages, totalCost) {
             padding: 0 2rem;
         }
         
-        /* shadcn/ui Card component styles */
+        /* shadcn/ui Card component styles - Enhanced */
         .card {
-            border-radius: calc(var(--radius) + 2px);
-            border: 1px solid hsl(var(--border));
-            background-color: hsl(var(--card));
+            border-radius: calc(var(--radius) + 4px);
+            border: 1px solid hsl(var(--border) / 0.8);
+            background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.98) 100%);
             color: hsl(var(--card-foreground));
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
+            backdrop-filter: blur(8px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .card-header {
             display: flex;
             flex-direction: column;
-            gap: 0.375rem;
-            padding: 1.5rem;
+            gap: 0.5rem;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid hsl(var(--border) / 0.4);
         }
         
         .card-title {
@@ -208,7 +213,7 @@ export async function generateHTMLOutput(messages, totalCost) {
         
         .card-content {
             padding: 1.5rem;
-            padding-top: 0;
+            padding-top: 1.25rem;
         }
         
         .card-footer {
@@ -251,18 +256,50 @@ export async function generateHTMLOutput(messages, totalCost) {
             border: 1px solid hsl(var(--border));
         }
         
-        /* Custom message styling with shadcn design */
+        /* Custom message styling with 2025 modern design */
         .message-card {
-            transition: all 0.2s ease-in-out;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .message-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, hsl(var(--border) / 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .message-card:hover {
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px 0 rgb(0 0 0 / 0.08), 0 4px 12px 0 rgb(0 0 0 / 0.05);
+        }
+        
+        .message-card:hover::before {
+            opacity: 1;
         }
         
         .message-card.speaker-2 {
-            background-color: hsl(142 76% 96%);
-            border-color: hsl(142 76% 91%);
+            background: linear-gradient(145deg, hsl(142 76% 98%) 0%, hsl(142 76% 96%) 100%);
+            border-color: hsl(142 76% 88%);
+            position: relative;
+        }
+        
+        .message-card.speaker-2::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, hsl(142 76% 75%) 0%, hsl(142 76% 65%) 100%);
+            border-radius: 0 calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0;
         }
         
         .message-card.edit-mode {
@@ -303,20 +340,92 @@ export async function generateHTMLOutput(messages, totalCost) {
             box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
         }
         
-        /* Alert component for merge instructions */
+        /* Enhanced Alert component with modern styling */
         .alert {
             position: relative;
             width: 100%;
-            border-radius: calc(var(--radius) - 2px);
-            border: 1px solid hsl(var(--border));
-            padding: 1rem;
-            background-color: hsl(var(--background));
+            border-radius: calc(var(--radius) + 2px);
+            border: 1px solid hsl(var(--border) / 0.6);
+            padding: 1.25rem;
+            background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.3) 100%);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.04);
         }
         
         .alert-info {
-            border-color: hsl(214 100% 86%);
-            background-color: hsl(214 100% 97%);
-            color: hsl(214 84% 25%);
+            border-color: hsl(214 100% 82%);
+            background: linear-gradient(135deg, hsl(214 100% 98%) 0%, hsl(214 100% 96%) 100%);
+            color: hsl(214 84% 28%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, hsl(214 100% 70%) 0%, hsl(214 100% 60%) 100%);
+        }
+        
+        /* Enhanced Audio Player Styling */
+        .audio-player-wrapper audio {
+            width: 100%;
+            border-radius: calc(var(--radius));
+            background: hsl(var(--background));
+            box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.06);
+        }
+        
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: hsl(var(--muted) / 0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--primary) / 0.8));
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.7), hsl(var(--primary) / 0.9));
+        }
+        
+        /* Subtle animations on load */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-card {
+            animation: fadeInUp 0.4s ease-out;
+        }
+        
+        .message-card:nth-child(even) {
+            animation-delay: 0.1s;
+        }
+        
+        .message-card:nth-child(odd) {
+            animation-delay: 0.05s;
+        }
+        
+        /* Focus states for better accessibility */
+        .btn:focus-visible,
+        .edit-textarea:focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
         }
     </style>
 </head>
@@ -326,9 +435,14 @@ export async function generateHTMLOutput(messages, totalCost) {
         <div class="card mb-8">
             <div class="card-header">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="card-title text-2xl">💬 שיחת WhatsApp</h1>
-                        <p class="card-description mt-2">מרכיב הודעות ומקבצים תמלולי שמע</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
+                                <span class="text-xl">💬</span>
+                            </div>
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">שיחת WhatsApp</h1>
+                        </div>
+                        <p class="text-base text-muted-foreground font-medium">מרכיב הודעות ומקבצים תמלולי שמע עם עיצוב מודרני</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button id="mergeBtn" onclick="toggleMergeMode()" 
@@ -361,8 +475,8 @@ export async function generateHTMLOutput(messages, totalCost) {
             </div>
         </div>
         
-        <!-- Messages Container -->
-        <div id="messagesContainer" class="space-y-4">
+        <!-- Messages Container with Bento Grid Layout -->
+        <div id="messagesContainer" class="grid gap-6 auto-rows-auto">
             ${await generateMessagesHTML(messages)}
         </div>
         
@@ -593,22 +707,28 @@ async function generateMessagesHTML(messages) {
                     </div>
                     
                     <div class="card-content space-y-4">
-                        <!-- Audio Player Section -->
-                        <div class="rounded-md border bg-muted/30 p-4">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="text-sm font-medium">🎵</span>
-                                <span class="text-sm font-medium text-muted-foreground">הודעה קולית</span>
+                        <!-- Audio Player Section with Enhanced Design -->
+                        <div class="rounded-lg border bg-gradient-to-br from-muted/20 to-muted/40 p-5 backdrop-blur-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <span class="text-sm">🎵</span>
+                                </div>
+                                <span class="text-sm font-semibold text-foreground/90">הודעה קולית</span>
                             </div>
-                            ${audioData}
+                            <div class="audio-player-wrapper">
+                                ${audioData}
+                            </div>
                         </div>
                         
-                        <!-- Transcription Section -->
-                        <div class="rounded-md border bg-muted/30 p-4">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="text-sm font-medium">📝</span>
-                                <span class="text-sm font-medium text-muted-foreground">תמלול</span>
+                        <!-- Transcription Section with Enhanced Design -->
+                        <div class="rounded-lg border bg-gradient-to-br from-secondary/30 to-secondary/50 p-5 backdrop-blur-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                                    <span class="text-sm">📝</span>
+                                </div>
+                                <span class="text-sm font-semibold text-foreground/90">תמלול</span>
                             </div>
-                            <div id="text-${index}" class="text-sm leading-relaxed">${formatMessageText(msg.text)}</div>
+                            <div id="text-${index}" class="text-base leading-relaxed font-medium text-foreground/95">${formatMessageText(msg.text)}</div>
                         </div>
                     </div>
                 </div>
@@ -638,7 +758,7 @@ async function generateMessagesHTML(messages) {
                                 <span class="text-sm font-medium">🎵</span>
                                 <span class="text-sm font-medium text-muted-foreground">קובץ אודיו</span>
                             </div>
-                            <div id="text-${index}" class="text-sm leading-relaxed">${formatMessageText(msg.text)}</div>
+                            <div id="text-${index}" class="text-base leading-relaxed">${formatMessageText(msg.text)}</div>
                         </div>
                     </div>
                 </div>
@@ -662,7 +782,7 @@ async function generateMessagesHTML(messages) {
                     </div>
                     
                     <div class="card-content">
-                        <div id="text-${index}" class="text-sm leading-relaxed">${formatMessageText(msg.text)}</div>
+                        <div id="text-${index}" class="text-base leading-relaxed">${formatMessageText(msg.text)}</div>
                     </div>
                 </div>
             `;
